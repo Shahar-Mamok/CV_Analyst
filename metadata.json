@@ -1,0 +1,5 @@
+{
+  "name": "Agentic CV Analyst",
+  "description": "A multi-agent system powered by Gemini to evaluate CVs against job descriptions with strict fact-checking and structural optimization.",
+  "requestFramePermissions": []
+}
