@@ -34,3 +34,13 @@ export interface AnalysisResult {
   keywordRecommendations: KeywordRecommendation[];
   rawText: string; // Kept for debugging or raw view if needed
 }
+
+export interface SavedAnalysis {
+  id: string;
+  category: string; // The "Folder" name (e.g. Job Title)
+  title: string; // The specific version/note
+  date: string; // ISO string
+  cvText: string;
+  jobText: string;
+  result: AnalysisResult;
+}

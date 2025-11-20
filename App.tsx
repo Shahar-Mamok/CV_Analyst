@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AgentVisualizer from './components/AgentVisualizer';
 import InputSection from './components/InputSection';
 import ResultsView from './components/ResultsView';
-import { AgentStatus, AnalysisResult } from './types';
+import HistoryDrawer from './components/HistoryDrawer';
+import { AgentStatus, AnalysisResult, SavedAnalysis } from './types';
 import { analyzeCVWithGemini } from './services/geminiService';
-import { Sparkles, ShieldCheck } from 'lucide-react';
+import { getSavedAnalyses, saveAnalysisToStorage, deleteAnalysisFromStorage } from './services/storage';
+import { Sparkles, ShieldCheck, History } from 'lucide-react';
 
 const App: React.FC = () => {
   const [cvText, setCvText] = useState('');
   const [jobText, setJobText] = useState('');
   const [status, setStatus] = useState<AgentStatus>(AgentStatus.IDLE);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
+
+  // Load history on mount
+  useEffect(() => {
+    setSavedAnalyses(getSavedAnalyses());
+  }, []);
 
   const runAnalysis = async () => {
     setStatus(AgentStatus.VALIDATING);
@@ -43,8 +52,41 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSaveAnalysis = (category: string, title: string) => {
+    if (!result) return;
+    const newSave: SavedAnalysis = {
+      id: crypto.randomUUID(),
+      category,
+      title,
+      date: new Date().toISOString(),
+      cvText,
+      jobText,
+      result
+    };
+    saveAnalysisToStorage(newSave);
+    setSavedAnalyses(getSavedAnalyses());
+  };
+
+  const handleLoadAnalysis = (item: SavedAnalysis) => {
+    setCvText(item.cvText);
+    setJobText(item.jobText);
+    setResult(item.result);
+    setStatus(AgentStatus.COMPLETE);
+    setIsHistoryOpen(false);
+    
+    // Scroll to results
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleDeleteAnalysis = (id: string) => {
+    const updated = deleteAnalysisFromStorage(id);
+    setSavedAnalyses(updated);
+  };
+
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#030712] text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col relative overflow-x-hidden font-['Outfit']">
       
       {/* Ambient Background Glows */}
       <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[128px] pointer-events-none z-0" />
@@ -53,7 +95,15 @@ const App: React.FC = () => {
       {/* Navbar */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#030712]/80 backdrop-blur-xl transition-all duration-300">
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
+          <div 
+            className="flex items-center gap-3 group cursor-pointer"
+            onClick={() => {
+               setStatus(AgentStatus.IDLE);
+               setResult(null);
+               setCvText('');
+               setJobText('');
+            }}
+          >
             <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20 transition-transform group-hover:scale-105">
               <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <Sparkles className="text-white relative z-10" size={20} fill="currentColor" fillOpacity={0.2} />
@@ -66,9 +116,22 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-            <ShieldCheck size={14} className="text-emerald-400" />
-            <span className="text-xs font-medium text-slate-400">Secure Environment</span>
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <ShieldCheck size={14} className="text-emerald-400" />
+                <span className="text-xs font-medium text-slate-400">Secure Environment</span>
+            </div>
+            
+            <button 
+                onClick={() => setIsHistoryOpen(true)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all relative"
+                title="Saved Analyses"
+            >
+                <History size={20} />
+                {savedAnalyses.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full border border-slate-900"></span>
+                )}
+            </button>
           </div>
         </div>
       </header>
@@ -98,7 +161,7 @@ const App: React.FC = () => {
         {/* Section 3: Results */}
         {result && (
            <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-             <ResultsView result={result} />
+             <ResultsView result={result} onSave={handleSaveAnalysis} />
            </section>
         )}
         
@@ -107,6 +170,15 @@ const App: React.FC = () => {
         </footer>
 
       </main>
+
+      <HistoryDrawer 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)} 
+        savedItems={savedAnalyses}
+        onLoad={handleLoadAnalysis}
+        onDelete={handleDeleteAnalysis}
+      />
+
     </div>
   );
 };
