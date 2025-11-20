@@ -9,6 +9,7 @@ import { getSavedAnalyses, saveAnalysisToStorage, deleteAnalysisFromStorage } fr
 import { Sparkles, ShieldCheck, History } from 'lucide-react';
 
 const App: React.FC = () => {
+  // App State
   const [cvText, setCvText] = useState('');
   const [jobText, setJobText] = useState('');
   const [status, setStatus] = useState<AgentStatus>(AgentStatus.IDLE);
@@ -119,9 +120,11 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
                 <ShieldCheck size={14} className="text-emerald-400" />
-                <span className="text-xs font-medium text-slate-400">Secure Environment</span>
+                <span className="text-xs font-medium text-slate-400">Secure Session</span>
             </div>
             
+            <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+
             <button 
                 onClick={() => setIsHistoryOpen(true)}
                 className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all relative"
