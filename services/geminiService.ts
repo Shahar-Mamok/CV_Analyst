@@ -42,9 +42,15 @@ export const analyzeCVWithGemini = async (cvText: string, jobText: string): Prom
         "question": "string" (A tough interview question based on a weakness in the CV),
         "context": "string" (Why you are asking this, e.g., 'Candidate lacks X'),
         "sampleAnswer": "string" (A STAR format strategy to answer this)
-      },
-      ... (provide 3 questions)
-    ]
+      }
+    ],
+    "keywordRecommendations": [
+      {
+        "keyword": "string" (The specific missing ATS keyword),
+        "actionType": "SUMMARY_INJECTION" | "PROJECT_ADDITION" | "WORD_REPLACEMENT",
+        "specificSuggestion": "string" (Exact text to insert/replace. e.g. 'Insert this phrase in summary...', 'Add this bullet to project X...', 'Replace "managed" with "orchestrated"')
+      }
+    ] (Provide 3-5 distinct keyword optimizations)
   }
   `;
 
@@ -86,6 +92,7 @@ const parseGeminiResponse = (text: string): AnalysisResult => {
       technicalGuidance: json.technicalGuidance || [],
       improvedSummary: json.improvedSummary || "Could not generate summary.",
       interviewPrep: json.interviewPrep || [],
+      keywordRecommendations: json.keywordRecommendations || [],
       rawText: text
     };
   } catch (e) {
@@ -99,6 +106,7 @@ const parseGeminiResponse = (text: string): AnalysisResult => {
       technicalGuidance: [],
       improvedSummary: "",
       interviewPrep: [],
+      keywordRecommendations: [],
       rawText: text
     };
   }

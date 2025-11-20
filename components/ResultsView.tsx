@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { AnalysisResult } from '../types';
-import { AlertTriangle, Scissors, Zap, FileOutput, Download, Check, MessagesSquare, FileText, Trophy, Sparkles } from 'lucide-react';
+import { AlertTriangle, Scissors, Zap, FileOutput, Download, Check, MessagesSquare, FileText, Trophy, Sparkles, ScanSearch, ArrowRightLeft, FileInput, Briefcase } from 'lucide-react';
 
 interface ResultsViewProps {
   result: AnalysisResult;
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({ result }) => {
-  const [activeTab, setActiveTab] = useState<'audit' | 'interview'>('audit');
+  const [activeTab, setActiveTab] = useState<'audit' | 'interview' | 'keywords'>('audit');
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
   
   const itemsCount = result.criticalAdjustments.length;
@@ -59,28 +59,26 @@ const ResultsView: React.FC<ResultsViewProps> = ({ result }) => {
           </div>
 
           {/* Circular Gauge */}
-          <div className="bg-slate-950/30 p-6 rounded-2xl border border-white/5 backdrop-blur-sm shrink-0 relative">
-             <div className="relative w-32 h-32">
-               <svg className="w-full h-full -rotate-90 drop-shadow-xl" viewBox="0 0 160 160">
-                 <circle cx="80" cy="80" r="70" stroke="#1e293b" strokeWidth="12" fill="transparent" />
-                 <circle cx="80" cy="80" r="70" stroke="url(#score-gradient)" strokeWidth="12" fill="transparent" 
-                   strokeDasharray={440}
-                   strokeDashoffset={440 - (440 * currentScore) / 100}
-                   strokeLinecap="round"
-                   className="transition-all duration-1000 ease-out"
-                 />
-                 <defs>
-                   <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                     <stop offset="0%" stopColor="#6366f1" />
-                     <stop offset="100%" stopColor="#a855f7" />
-                   </linearGradient>
-                 </defs>
-               </svg>
-               <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                 <span className="text-3xl font-bold text-white tracking-tight">{currentScore}</span>
-                 <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-1">Score</span>
-               </div>
-            </div>
+          <div className="relative w-32 h-32 shrink-0">
+             <svg className="w-full h-full -rotate-90 drop-shadow-xl" viewBox="0 0 160 160">
+               <circle cx="80" cy="80" r="70" stroke="#1e293b" strokeWidth="12" fill="transparent" />
+               <circle cx="80" cy="80" r="70" stroke="url(#score-gradient)" strokeWidth="12" fill="transparent" 
+                 strokeDasharray={440}
+                 strokeDashoffset={440 - (440 * currentScore) / 100}
+                 strokeLinecap="round"
+                 className="transition-all duration-1000 ease-out"
+               />
+               <defs>
+                 <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                   <stop offset="0%" stopColor="#6366f1" />
+                   <stop offset="100%" stopColor="#a855f7" />
+                 </linearGradient>
+               </defs>
+             </svg>
+             <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+               <span className="text-3xl font-bold text-white tracking-tight">{currentScore}</span>
+               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-1">Score</span>
+             </div>
           </div>
         </div>
 
@@ -93,13 +91,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({ result }) => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md max-w-md mx-auto md:mx-0">
+      <div className="flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md max-w-lg mx-auto md:mx-0">
         <button 
            onClick={() => setActiveTab('audit')}
            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2
            ${activeTab === 'audit' ? 'bg-slate-800 text-white shadow-lg ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-300'}`}
         >
            <FileText size={14} /> CV Audit
+        </button>
+        <button 
+           onClick={() => setActiveTab('keywords')}
+           className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2
+           ${activeTab === 'keywords' ? 'bg-slate-800 text-white shadow-lg ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+           <ScanSearch size={14} /> ATS Keywords
         </button>
         <button 
            onClick={() => setActiveTab('interview')}
@@ -192,6 +197,80 @@ const ResultsView: React.FC<ResultsViewProps> = ({ result }) => {
                "{result.improvedSummary}"
              </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab Content: KEYWORDS */}
+      {activeTab === 'keywords' && (
+        <div className="grid grid-cols-1 gap-6 animate-fade-in">
+           
+           {/* Header Info */}
+           <div className="bg-fuchsia-900/10 border border-fuchsia-500/20 rounded-2xl p-5 flex items-start gap-4">
+              <div className="p-2 bg-fuchsia-500/20 rounded-lg text-fuchsia-400"><ScanSearch size={20} /></div>
+              <div>
+                 <h4 className="text-fuchsia-100 font-bold text-sm mb-1">Keyword Injection Generator</h4>
+                 <p className="text-fuchsia-300/60 text-xs leading-relaxed">
+                    ATS parsers are missing these high-value tokens in your profile. Use the precise phrasing below to increase your semantic match score.
+                 </p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {result.keywordRecommendations?.map((rec, idx) => {
+                let icon = <Sparkles size={18} />;
+                let color = "text-slate-400";
+                let bg = "bg-slate-500/10";
+                let label = "Optimization";
+
+                if (rec.actionType === 'SUMMARY_INJECTION') {
+                    icon = <FileInput size={18} />;
+                    color = "text-pink-400";
+                    bg = "bg-pink-500/10";
+                    label = "Summary Injection";
+                } else if (rec.actionType === 'PROJECT_ADDITION') {
+                    icon = <Briefcase size={18} />;
+                    color = "text-cyan-400";
+                    bg = "bg-cyan-500/10";
+                    label = "Project Enhancement";
+                } else if (rec.actionType === 'WORD_REPLACEMENT') {
+                    icon = <ArrowRightLeft size={18} />;
+                    color = "text-amber-400";
+                    bg = "bg-amber-500/10";
+                    label = "Vocabulary Upgrade";
+                }
+
+                return (
+                    <div key={idx} className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 hover:border-white/10 transition-all group relative overflow-hidden">
+                        <div className={`absolute top-0 left-0 w-full h-1 ${bg.replace('/10', '/50')}`}></div>
+                        
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center ${color}`}>
+                                    {icon}
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
+                                    {label}
+                                </span>
+                            </div>
+                            <div className="px-3 py-1 rounded-full bg-slate-950 border border-white/5 text-xs font-mono text-slate-300">
+                                {rec.keyword}
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-950/50 rounded-xl p-4 border border-white/5 group-hover:border-white/10 transition-colors">
+                            <p className="text-slate-300 text-sm leading-relaxed font-medium">
+                                "{rec.specificSuggestion}"
+                            </p>
+                        </div>
+                    </div>
+                );
+             })}
+             {(!result.keywordRecommendations || result.keywordRecommendations.length === 0) && (
+                 <div className="col-span-full text-center py-12 text-slate-500 text-sm">
+                     No keyword recommendations generated. Your CV might already be well-optimized!
+                 </div>
+             )}
+           </div>
         </div>
       )}
 

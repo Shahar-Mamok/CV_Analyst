@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { FileText, Briefcase, Upload, Loader2, AlertCircle, X, CheckCircle2, Wand2 } from 'lucide-react';
 import { extractTextFromFile } from '../utils/fileHelpers';
 
@@ -22,11 +22,9 @@ const InputSection: React.FC<InputSectionProps> = ({
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     setIsFileLoading(true);
     setUploadError(null);
 
@@ -43,9 +41,49 @@ const InputSection: React.FC<InputSectionProps> = ({
       setFileName(null);
     } finally {
       setIsFileLoading(false);
-      e.target.value = '';
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    e.target.value = ''; // Reset input so same file can be selected again if needed
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isProcessing && !isFileLoading) {
+        setIsDragging(true);
+    }
+  }, [isProcessing, isFileLoading]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isProcessing || isFileLoading) return;
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+        if (file.type === 'application/pdf' || 
+            file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+            file.name.endsWith('.pdf') || 
+            file.name.endsWith('.docx')) {
+            await processFile(file);
+        } else {
+            setUploadError("Unsupported file type. Please drop a PDF or DOCX.");
+        }
+    }
+  }, [isProcessing, isFileLoading]);
 
   const handleClear = () => {
       setCvText('');
@@ -81,7 +119,7 @@ const InputSection: React.FC<InputSectionProps> = ({
           {/* Textarea */}
           <textarea
             className="w-full h-32 bg-transparent border-0 text-slate-300 text-sm placeholder:text-slate-600 focus:ring-0 resize-none leading-relaxed"
-            placeholder="Paste raw text here..."
+            placeholder="Paste raw text here or drop your resume below..."
             value={cvText}
             onChange={(e) => {
                 setCvText(e.target.value);
@@ -90,8 +128,13 @@ const InputSection: React.FC<InputSectionProps> = ({
             disabled={isProcessing || isFileLoading}
           />
 
-          {/* Upload Zone */}
-          <div className="relative group">
+          {/* Upload Zone (Drag & Drop) */}
+          <div 
+            className="relative group"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <input
               type="file"
               id="cv-upload"
@@ -103,22 +146,40 @@ const InputSection: React.FC<InputSectionProps> = ({
             <label 
               htmlFor="cv-upload"
               className={`
-                relative flex items-center justify-between px-4 py-3 rounded-xl border border-dashed transition-all cursor-pointer
-                ${fileName 
-                  ? 'bg-emerald-500/5 border-emerald-500/30' 
-                  : 'bg-slate-800/30 border-slate-700 hover:bg-slate-800/50 hover:border-indigo-500/50'
+                relative flex flex-col items-center justify-center gap-3 px-4 py-6 rounded-xl border-2 border-dashed transition-all cursor-pointer
+                ${isDragging 
+                    ? 'bg-indigo-500/10 border-indigo-500 scale-[1.01]' 
+                    : fileName 
+                        ? 'bg-emerald-500/5 border-emerald-500/30' 
+                        : 'bg-slate-800/30 border-slate-700 hover:bg-slate-800/50 hover:border-indigo-500/50'
                 }
               `}
             >
-              <div className="flex items-center gap-3">
-                {isFileLoading ? <Loader2 size={18} className="animate-spin text-indigo-400" /> : fileName ? <CheckCircle2 size={18} className="text-emerald-400" /> : <Upload size={18} className="text-indigo-400" />}
-                <span className={`text-xs font-medium ${fileName ? 'text-emerald-300' : 'text-slate-400 group-hover:text-indigo-200'}`}>
-                  {isFileLoading ? 'Parsing document...' : fileName ? fileName : 'Upload PDF / DOCX'}
-                </span>
-              </div>
-              {!fileName && !isFileLoading && (
-                 <span className="text-[10px] text-slate-600 uppercase font-bold tracking-wider bg-slate-900 px-2 py-1 rounded">Browse</span>
-              )}
+                {isFileLoading ? (
+                    <Loader2 size={24} className="animate-spin text-indigo-400" />
+                ) : fileName ? (
+                    <CheckCircle2 size={24} className="text-emerald-400" />
+                ) : (
+                    <Upload size={24} className={`transition-colors ${isDragging ? 'text-indigo-400' : 'text-slate-500'}`} />
+                )}
+                
+                <div className="text-center">
+                    <span className={`text-xs font-medium block mb-1 ${fileName ? 'text-emerald-300' : isDragging ? 'text-indigo-300' : 'text-slate-400 group-hover:text-indigo-200'}`}>
+                    {isFileLoading 
+                        ? 'Parsing document...' 
+                        : fileName 
+                            ? fileName 
+                            : isDragging 
+                                ? 'Drop file here to upload' 
+                                : 'Drop PDF / DOCX here or click to browse'
+                    }
+                    </span>
+                    {!fileName && !isFileLoading && !isDragging && (
+                        <span className="text-[10px] text-slate-600">
+                            Supports PDF & DOCX (Text Extraction)
+                        </span>
+                    )}
+                </div>
             </label>
           </div>
 

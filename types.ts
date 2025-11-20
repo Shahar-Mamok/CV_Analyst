@@ -13,6 +13,12 @@ export interface InterviewQuestion {
   sampleAnswer: string;
 }
 
+export interface KeywordRecommendation {
+  keyword: string;
+  actionType: 'SUMMARY_INJECTION' | 'PROJECT_ADDITION' | 'WORD_REPLACEMENT';
+  specificSuggestion: string;
+}
+
 export interface AnalysisResult {
   matchScore: number;
   subScores: {
@@ -25,5 +31,6 @@ export interface AnalysisResult {
   technicalGuidance: string[];
   improvedSummary: string;
   interviewPrep: InterviewQuestion[];
+  keywordRecommendations: KeywordRecommendation[];
   rawText: string; // Kept for debugging or raw view if needed
 }
