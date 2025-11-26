@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Chat } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const API_KEY = process.env.API_KEY || '';
@@ -110,4 +110,34 @@ const parseGeminiResponse = (text: string): AnalysisResult => {
       rawText: text
     };
   }
+};
+
+export const createChatSession = (context?: { cvText: string; jobText: string }): Chat => {
+  if (!API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  
+  let instruction = `You are an expert Senior Technical Recruiter and Career Coach named "Agent Architect". 
+  You are helpful, precise, and encouraging. 
+  Your goal is to help the user optimize their CV and prepare for interviews.
+  
+  Formatting rules:
+  - Use bullet points for lists.
+  - Keep answers concise but informative.
+  `;
+
+  if (context?.cvText || context?.jobText) {
+    instruction += `\n\nCONTEXT DATA AVAILABLE:\n`;
+    if (context.cvText) instruction += `=== CURRENT CV CONTENT ===\n${context.cvText}\n\n`;
+    if (context.jobText) instruction += `=== TARGET JOB DESCRIPTION ===\n${context.jobText}\n\n`;
+    instruction += `Use this context to provide specific, tailored advice based on the candidate's actual profile and the job they want.`;
+  }
+
+  return ai.chats.create({
+    model: 'gemini-3-pro-preview',
+    config: {
+      systemInstruction: instruction,
+    }
+  });
 };

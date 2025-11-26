@@ -3,6 +3,7 @@ import AgentVisualizer from './components/AgentVisualizer';
 import InputSection from './components/InputSection';
 import ResultsView from './components/ResultsView';
 import HistoryDrawer from './components/HistoryDrawer';
+import ChatInterface from './components/ChatInterface';
 import { AgentStatus, AnalysisResult, SavedAnalysis } from './types';
 import { analyzeCVWithGemini } from './services/geminiService';
 import { getSavedAnalyses, saveAnalysisToStorage, deleteAnalysisFromStorage } from './services/storage';
@@ -169,7 +170,7 @@ const App: React.FC = () => {
         )}
         
         <footer className="text-center py-10 text-slate-600 text-xs">
-          <p>&copy; 2025 Agentic CV Architect. Powered by Gemini 2.5 Flash.</p>
+          <p>&copy; 2025 Agentic CV Architect. Powered by Gemini 2.5 Flash & Gemini 3 Pro.</p>
         </footer>
 
       </main>
@@ -181,6 +182,9 @@ const App: React.FC = () => {
         onLoad={handleLoadAnalysis}
         onDelete={handleDeleteAnalysis}
       />
+
+      {/* Chat Interface */}
+      <ChatInterface cvText={cvText} jobText={jobText} />
 
     </div>
   );
