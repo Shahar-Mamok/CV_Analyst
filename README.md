@@ -36,3 +36,5 @@ git clone https://github.com/Shahar-Mamok/CV_Analyst.git
 cd CV_Analyst
 <img width="1405" height="680" alt="צילום מסך 2025-11-26 211045" src="https://github.com/user-attachments/assets/bbf49ceb-1f13-4a6b-8309-dec9c7554ac1" />
 <img width="1434" height="1164" alt="צילום מסך 2025-11-26 211136" src="https://github.com/user-attachments/assets/8191c56a-9839-4e29-ae3e-af02bd88da08" />
+<img width="1415" height="920" alt="צילום מסך 2025-11-26 211218" src="https://github.com/user-attachments/assets/631050a2-9549-41be-88dc-c6df0737472a" />
+<img width="915" height="1167" alt="צילום מסך 2025-11-26 211258" src="https://github.com/user-attachments/assets/c6fe72df-7f7d-4dfb-a508-96ce45ce39ee" />
